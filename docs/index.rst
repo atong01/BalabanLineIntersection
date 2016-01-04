@@ -142,7 +142,7 @@ staircase :math:`\langle b,e\rangle`
     we can find the set of stairs that it intersects with as a range counting problem
     which is accomplished :math:`O(log(n))` time.
 
-.. _complete_staircase:
+.. _complete staircase:
 
 complete staircase 
     A staircase is considered complete, if we cannot add any more non-intersecting
@@ -156,7 +156,24 @@ complete staircase
 Finding Intersections In A Strip
 ++++++++++++++++++++++++++++++++
 
-Now that we have defined a few terms, we will present the outline of 
+One way to attack the problem of finding intersections in a strip is to define
+the problem recursively. The instead of trying to find all intersections between
+segments in a set (lets call it S). We can partition S into two subsets, :math:`S_1`,
+and :math:`S_2`. We can conclude that finding all intersections of segments in set S,
+denoted Int(S), is the same as finding all intersections between segments of :math:`S_1`, 
+intersections between segmenets of :math:`S_2`, and intersections between segments
+of :math:`S_1` and :math:`S_2`. In this way we can break down the problem of finding
+intersections between segmenets in a single set, into multiple smaller problems.
+
+For this algorithm we will use a vary particular partition of our set S of segments
+in a strip. Specifically, if we split out a set Q, a complete staircase with
+respect to S, and have the leftovers of the partition in a set :math:`S_p`, then
+the problem is even more simple than the general case, as there are no intersections
+between segments in the set Q, by the definition of a `complete staircase_`. This
+leaves us with a way to split the problem of finding the intersections of segments
+in a set S into three parts, finding a complete staircase Q, and leftovers :math:`S_p`,
+finding intersections between Q and :math:`S_p`, and finding intersections between
+segments in :math:`S_p`.
 
 For a strip with segments S:
     #. find a complete staircase Q (split)
@@ -175,8 +192,8 @@ ending x coordinates of the strip.
 1. Finding A Complete Staircase
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To find the complete staircase we iterate through the entire set S sorted by left endpoint, and appending
-any line that does not intersect the previous staircase segment.
+To find the complete staircase we iterate through the entire set S sorted by left
+endpoint, and appending any segment that does not intersect the previous staircase segment.
 
 .. literalinclude:: Split.py
     :linenos:
@@ -186,9 +203,9 @@ By inspection of the function it is easy to conclude that split runs in :math:`O
 2. Finding The Intersections Between Q and :math:`S_p`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Because Q is ordered, and none of its lines intersect, figuring out whether any
-line in S_p intersects any line in Q is easy. For any segment we check the stairs
-in Q above and below it. We continue in this fashion, checking stairs above and
+Because Q is ordered, and none of its segments intersect, figuring out whether any
+segment in S_p intersects any segment in Q is easy. For any segment **s** we check the stairs
+in Q above and below **s**. We continue in this fashion, checking stairs above and
 below until the first stair that does not intersect our segment. 
 
 The function findStaircaseIntersections runs in :math:`O(|S| + |Int_{\langle b,e \rangle}(S)|)` time,
@@ -201,10 +218,10 @@ of successful checks.
 To find the intersections between segments in :math:`S_p`, we simply recurse using
 SearchInStrip until there are no lines left left.
 
-If all segments span a single strip, this would be easy, the above algorithm would
-be sufficient. However, we cannot assume all segments are spanning. Therefore, we
-present a Tree Search algorithm that deals with line end points with a binary
-search until all segments span the strip.
+If all segments span a single strip, finding intersections between segments in :math:`S_p`
+would be easy, the above algorithm would be sufficient. However, we cannot assume
+all segments are spanning. Therefore, we present a Tree Search algorithm that deals
+with line end points with a binary search until all segments span the strip.
 
 A First Attempt
 +++++++++++++++
@@ -233,6 +250,8 @@ by at least the size of the staircase for each level. This is important later
 in the overall time complexity of the algorithm because if the number of segments
 did not shrink then we would be performing n SearchInStrip operations.
 
+.. TODO:: what happens if all staircases are constant size?
+
 A Second Attempt
 ++++++++++++++++
 
@@ -257,9 +276,8 @@ This representation is easy to create in :math:`O(|S|log|S|)` time. As it is an
 :math:`O(|S|)` Operation to find those lines in each set and an :math:`O(|S|log|S|)`
 operation to sort sets L, R.
 
-Our new tree search uses this concept, taking a sets 
-L, I, and S, and generating a set R, and all the intersections with the staircase
-generated at that level.
+Our new tree search uses this concept, taking sets L, I, and S, and generating a
+set R, and all the intersections with the staircase generated at that level.
 
 Tree Search
 ^^^^^^^^^^^
@@ -269,7 +287,7 @@ Given our new representation for set S all we have to do is modify the recursion
 Step 5:
     a. Split the segments of I into :math:`I_{ls}`, :math:`I_{rs}`, and :math:`R_{ls}`
     b. TreeSearch on the left side to get the rest of :math:`R_{ls}`
-    c. Insert or delete the one segment that changed on the line :math:`x=c` to get :math:`L_{rs}` (assuming general no segments end/begin on the same x coordinate)
+    c. Insert or delete the one segment that changed on the line :math:`x=c` to get :math:`L_{rs}` (assuming no segments end/begin on the same x coordinate)
     d. Perform a TreeSearch on strip :math:`\langle c,e\rangle`, the right side to get :math:`R_{rs}`
 
 Step 3:
@@ -293,15 +311,14 @@ for the right side of the strip as :math:`L_{rs}`.
 
     Figure 4: Shows the new assignments for :math:`L_{rs}`, :math:`R_{rs}`, and :math:`I_{rs}`.
 
-
-This algorithm uses the concepts from the last version, only it takes into account
-a faster representation of the set S, which makes the particulars more complicated.
 Looking closely, we have effectively accomplished the same operation at each node
 of the tree only with our new representation of the set S. However, this algorithm
 runs more efficiently, in fact it runs in :math:`O(n log^2(n) + k)` where n is the
 number of segments in the original set S and k is the number of intersections between
 segments in S. We will not prove rigourously why this is the case here, please see
 Balaban's original paper for rigourous proof [1]_.
+
+.. TODO:: where specifically???
 
 The slow step is step 10, which takes up to :math:`O(logn)` time
 for each segment in I at each node, the final algorithm improves
@@ -316,11 +333,17 @@ staircase, we first have to locate the starting location of each of the segments
 of I with a binary search, which then allows a :math:`O(1 + #Intersections)` per
 segment search for stair intersections. 
 
+For the optimal algorithm to locate the stair location, denoted *Loc(s)* for segment
+s, for a given strip :math:`\langle b,e\rangle`, i.e. which two stairs the left
+endpoint of segment *s* lies between, we can incorporate knowledge of the same
+segments location in a slightly different but similar set of stairs, namely the
+stairs of either the left or right strip of the current strip.
+
 The idea here is to use stair location of the child nodes of the current node
 to locate the segments in I. Specifically, by including every 4th stair in the
 father node's staircase in the current staircase. Intuitively, this increases
 the current staircase size by a constant factor, which won't change the time 
-complexities of any of the sub processes'. 
+complexities of any of the sub processes. 
 
 We denote the father staircase of staircase :math:`Q` as :math:`Q_{ft}`.
 
